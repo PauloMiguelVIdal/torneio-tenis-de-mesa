@@ -1,33 +1,65 @@
 import React, { useState } from 'react';
 
-const GroupStage = ({ groups, recordGroupResult }) => {
-  const [results, setResults] = useState({});
+const GroupStage = ({ groups, recordGroupResult, matchFormat }) => {
+  const [scores, setScores] = useState({});
 
-  const handleScoreChange = (groupIndex, matchIndex, participant, score) => {
-    setResults({
-      ...results,
-      [`${groupIndex}-${matchIndex}`]: {
-        ...results[`${groupIndex}-${matchIndex}`],
-        [participant]: score,
+  const handleScoreChange = (groupIndex, matchIndex, participant, scoreIndex, score) => {
+    const matchKey = `${groupIndex}-${matchIndex}`;
+    const updatedScores = {
+      ...scores,
+      [matchKey]: {
+        ...scores[matchKey],
+        [participant]: {
+          ...(scores[matchKey]?.[participant] || []),
+          [scoreIndex]: score || 0, // Garantindo que sempre é um número
+        },
       },
-    });
+    };
+    setScores(updatedScores);
   };
 
   const handleSubmitResult = (groupIndex, matchIndex, participant1, participant2) => {
-    const result = results[`${groupIndex}-${matchIndex}`];
-    if (result && result[participant1] !== undefined && result[participant2] !== undefined) {
-      const winner = result[participant1] > result[participant2] ? participant1 : participant2;
-      recordGroupResult(groupIndex, matchIndex, participant1, participant2, winner);
-    } else {
-      alert("Por favor, insira os resultados de ambos os participantes.");
+    const result = scores[`${groupIndex}-${matchIndex}`];
+    if (matchFormat === 'MD1') {
+      // Lógica para melhor de 1
+      if (result && result[participant1] !== undefined && result[participant2] !== undefined) {
+        const winner = result[participant1] > result[participant2] ? participant1 : participant2;
+        recordGroupResult(groupIndex, matchIndex, participant1, participant2, winner);
+      } else {
+        alert("Por favor, insira os resultados de ambos os participantes.");
+      }
+    } else if (matchFormat === 'MD3') {
+      // Lógica para melhor de 3
+      if (result && result[participant1] && result[participant2]) {
+        const scores1 = result[participant1] || [];
+        const scores2 = result[participant2] || [];
+
+        // Verifica se scores1 e scores2 são arrays
+        if (!Array.isArray(scores1) || !Array.isArray(scores2)) {
+          alert("Os dados de pontuação estão incorretos.");
+          return;
+        }
+
+        if (scores1.length < 3 || scores2.length < 3) {
+          alert("É necessário registrar 3 pontos para cada participante.");
+          return;
+        }
+
+        const totalPoints1 = scores1.reduce((sum, score) => sum + (score || 0), 0);
+        const totalPoints2 = scores2.reduce((sum, score) => sum + (score || 0), 0);
+
+        const winner = totalPoints1 > totalPoints2 ? participant1 : participant2;
+        recordGroupResult(groupIndex, matchIndex, participant1, participant2, winner);
+      } else {
+        alert("Por favor, insira os resultados de ambos os participantes.");
+      }
     }
   };
 
-  // Gera os jogos para que ninguém jogue contra si mesmo
   const generateMatches = (group) => {
     const matches = [];
     for (let i = 0; i < group.length; i++) {
-      for (let j = i + 1; j < group.length; j++) { // j sempre começa depois de i
+      for (let j = i + 1; j < group.length; j++) {
         matches.push([group[i], group[j]]);
       }
     }
@@ -44,18 +76,37 @@ const GroupStage = ({ groups, recordGroupResult }) => {
             {generateMatches(group).map((match, matchIndex) => (
               <li key={matchIndex}>
                 <p>{match[0]} vs {match[1]}</p>
-                <input
-                  type="number"
-                  placeholder={`Pontos de ${match[0]}`}
-                  value={results[`${groupIndex}-${matchIndex}`]?.[match[0]] || ''}
-                  onChange={(e) => handleScoreChange(groupIndex, matchIndex, match[0], parseInt(e.target.value))}
-                />
-                <input
-                  type="number"
-                  placeholder={`Pontos de ${match[1]}`}
-                  value={results[`${groupIndex}-${matchIndex}`]?.[match[1]] || ''}
-                  onChange={(e) => handleScoreChange(groupIndex, matchIndex, match[1], parseInt(e.target.value))}
-                />
+                {matchFormat === 'MD1' ? (
+                  <>
+                    <input
+                      type="number"
+                      placeholder={`Pontos de ${match[0]}`}
+                      onChange={(e) => handleScoreChange(groupIndex, matchIndex, match[0], 0, parseInt(e.target.value) || 0)}
+                    />
+                    <input
+                      type="number"
+                      placeholder={`Pontos de ${match[1]}`}
+                      onChange={(e) => handleScoreChange(groupIndex, matchIndex, match[1], 0, parseInt(e.target.value) || 0)}
+                    />
+                  </>
+                ) : (
+                  <>
+                    {[0, 1, 2].map(scoreIndex => (
+                      <div key={scoreIndex}>
+                        <input
+                          type="number"
+                          placeholder={`Ponto ${scoreIndex + 1} de ${match[0]}`}
+                          onChange={(e) => handleScoreChange(groupIndex, matchIndex, match[0], scoreIndex, parseInt(e.target.value) || 0)}
+                        />
+                        <input
+                          type="number"
+                          placeholder={`Ponto ${scoreIndex + 1} de ${match[1]}`}
+                          onChange={(e) => handleScoreChange(groupIndex, matchIndex, match[1], scoreIndex, parseInt(e.target.value) || 0)}
+                        />
+                      </div>
+                    ))}
+                  </>
+                )}
                 <button onClick={() => handleSubmitResult(groupIndex, matchIndex, match[0], match[1])}>
                   Registrar Resultado
                 </button>
@@ -64,6 +115,15 @@ const GroupStage = ({ groups, recordGroupResult }) => {
           </ul>
         </div>
       ))}
+      <button onClick={() => {
+        groups.forEach((group, groupIndex) => {
+          generateMatches(group).forEach((match, matchIndex) => {
+            handleSubmitResult(groupIndex, matchIndex, match[0], match[1]);
+          });
+        });
+      }}>
+        Registrar Resultados
+      </button>
     </div>
   );
 };

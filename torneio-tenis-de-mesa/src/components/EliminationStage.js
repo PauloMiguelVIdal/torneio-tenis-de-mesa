@@ -1,46 +1,48 @@
 import React, { useState } from 'react';
+import useTournament from '../hooks/useTournament';
+import ParticipantForm from './ParticipantForm';
+import GroupStage from './GroupStage';
+import EliminationStage from './EliminationStage';
 
-const EliminationStage = ({ elimination, recordMatchResult }) => {
-  const [results, setResults] = useState({});
+const Tournament = () => {
+  const { 
+    participants, 
+    groups, 
+    elimination, 
+    addParticipant, 
+    updateParticipant,
+    removeParticipant,
+    generateGroups, 
+    generateElimination, 
+    recordGroupResult,  // use this function
+  } = useTournament();
 
-  const handleResultChange = (index, value) => {
-    setResults({ ...results, [index]: value });
-  };
-
-  const handleSubmitResult = (index, participant1, participant2) => {
-    const result = results[index];
-    if (result) {
-      recordMatchResult(index, participant1, participant2, result);
-    } else {
-      alert("Por favor, insira o vencedor.");
-    }
-  };
+  const [numGroups, setNumGroups] = useState(2);
 
   return (
     <div>
-      <h2>Fase Eliminatória</h2>
-      {elimination.length > 0 ? (
-        <ul>
-          {elimination.map((match, idx) => (
-            <li key={idx}>
-              <p>{match[0]} vs {match[1]}</p>
-              <input
-                type="text"
-                placeholder="Digite o vencedor"
-                value={results[idx] || ''}
-                onChange={(e) => handleResultChange(idx, e.target.value)}
-              />
-              <button onClick={() => handleSubmitResult(idx, match[0], match[1])}>
-                Registrar Resultado
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p>Nenhum jogo foi gerado ainda.</p>
+      <h1>Torneio Tênis de Mesa</h1>
+
+      <ParticipantForm 
+        addParticipant={addParticipant} 
+        participants={participants} 
+        updateParticipant={updateParticipant}
+        removeParticipant={removeParticipant}
+      />
+
+      <button onClick={() => generateGroups(numGroups)}>Gerar Grupos</button>
+      {groups.length > 0 && <GroupStage groups={groups} recordGroupResult={recordGroupResult} />}
+      {groups.length > 0 && (
+        <button onClick={generateElimination}>Gerar Fase Eliminatória</button>
+      )}
+      {elimination.length > 0 && (
+        <EliminationStage 
+          elimination={elimination} 
+          recordMatchResult={recordGroupResult} // Pass the function correctly here
+        />
       )}
     </div>
   );
 };
 
-export default EliminationStage;
+export default Tournament;

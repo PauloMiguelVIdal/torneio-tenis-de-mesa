@@ -10,8 +10,19 @@ const useTournament = () => {
     setParticipants([...participants, name]);
   };
 
-  const generateGroups = (numGroups) => {
-    const shuffled = participants.sort(() => 0.5 - Math.random());
+  const updateParticipant = (oldName, newName) => {
+    const updatedParticipants = participants.map(participant => 
+      participant === oldName ? newName : participant
+    );
+    setParticipants(updatedParticipants);
+  };
+
+  const removeParticipant = (name) => {
+    setParticipants(participants.filter(participant => participant !== name));
+  };
+
+  const generateGroups = (numGroups, matchFormat) => {
+    const shuffled = [...participants].sort(() => 0.5 - Math.random());
     const newGroups = [];
     const groupSize = Math.ceil(shuffled.length / numGroups);
 
@@ -52,6 +63,8 @@ const useTournament = () => {
     groups,
     elimination,
     addParticipant,
+    updateParticipant,
+    removeParticipant,
     generateGroups,
     generateElimination,
     recordGroupResult,
