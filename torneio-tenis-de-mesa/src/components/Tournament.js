@@ -14,7 +14,7 @@ const Tournament = () => {
     removeParticipant,
     generateGroups, 
     generateElimination, 
-    recordGroupResult, 
+    recordGroupResultsAutomatically,
   } = useTournament();
 
   const [numGroups, setNumGroups] = useState(2);
@@ -22,6 +22,11 @@ const Tournament = () => {
 
   const handleGenerateGroups = () => {
     generateGroups(numGroups, matchFormat); // Passa o formato do jogo
+  };
+
+  const handleGenerateElimination = () => {
+    recordGroupResultsAutomatically(); // Registrar os resultados automaticamente
+    generateElimination(); // Gerar a fase de eliminação somente após registrar os resultados
   };
 
   return (
@@ -47,14 +52,17 @@ const Tournament = () => {
       </div>
 
       <button onClick={handleGenerateGroups}>Gerar Grupos</button>
-      {groups.length > 0 && <GroupStage groups={groups} recordGroupResult={recordGroupResult} matchFormat={matchFormat} />}
       {groups.length > 0 && (
-        <button onClick={generateElimination}>Gerar Fase Eliminatória</button>
+        <>
+          <GroupStage groups={groups} matchFormat={matchFormat} />
+          <button onClick={handleGenerateElimination}>Gerar Fase Eliminatória</button>
+        </>
       )}
+
       {elimination.length > 0 && (
         <EliminationStage 
           elimination={elimination} 
-          recordMatchResult={recordGroupResult}
+          recordMatchResult={recordGroupResultsAutomatically} // Função para registrar automaticamente
         />
       )}
     </div>

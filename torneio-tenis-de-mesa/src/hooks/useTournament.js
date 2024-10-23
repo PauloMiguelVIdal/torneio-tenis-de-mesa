@@ -21,7 +21,7 @@ const useTournament = () => {
     setParticipants(participants.filter(participant => participant !== name));
   };
 
-  const generateGroups = (numGroups, matchFormat) => {
+  const generateGroups = (numGroups) => {
     const shuffled = [...participants].sort(() => 0.5 - Math.random());
     const newGroups = [];
     const groupSize = Math.ceil(shuffled.length / numGroups);
@@ -33,7 +33,7 @@ const useTournament = () => {
   };
 
   const generateElimination = () => {
-    const qualifiedParticipants = Object.values(groupResults).flat();
+    const qualifiedParticipants = Object.values(groupResults).flat(); // Pegamos os participantes classificados
     if (qualifiedParticipants.length < 2) {
       alert("Você precisa de pelo menos dois participantes para gerar a fase eliminatória.");
       return;
