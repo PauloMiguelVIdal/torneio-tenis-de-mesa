@@ -14,19 +14,30 @@ const Tournament = () => {
     removeParticipant,
     generateGroups, 
     generateElimination, 
-    recordGroupResultsAutomatically,
+    recordGroupResult,
+    resetTournament,
   } = useTournament();
 
   const [numGroups, setNumGroups] = useState(2);
-  const [matchFormat, setMatchFormat] = useState('MD1'); // Estado para formato do jogo
+  const [matchFormat, setMatchFormat] = useState('MD1');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleGenerateGroups = () => {
-    generateGroups(numGroups, matchFormat); // Passa o formato do jogo
+    if (participants.length < numGroups) {
+      setErrorMessage('Número de participantes insuficiente para gerar grupos.');
+      return;
+    }
+    setErrorMessage('');
+    generateGroups(numGroups, matchFormat);
   };
 
   const handleGenerateElimination = () => {
-    recordGroupResultsAutomatically(); // Registrar os resultados automaticamente
-    generateElimination(); // Gerar a fase de eliminação somente após registrar os resultados
+    try {
+      generateElimination();
+      setErrorMessage('');
+    } catch (error) {
+      setErrorMessage(error.message);
+    }
   };
 
   return (
@@ -51,20 +62,29 @@ const Tournament = () => {
         </label>
       </div>
 
-      <button onClick={handleGenerateGroups}>Gerar Grupos</button>
+      <button onClick={handleGenerateGroups} disabled={participants.length < numGroups}>
+        Gerar Grupos
+      </button>
+      
+      {groups.length > 0 && <GroupStage groups={groups} recordGroupResult={recordGroupResult} matchFormat={matchFormat} />}
+
       {groups.length > 0 && (
-        <>
-          <GroupStage groups={groups} matchFormat={matchFormat} />
-          <button onClick={handleGenerateElimination}>Gerar Fase Eliminatória</button>
-        </>
+        <button onClick={handleGenerateElimination} disabled={groups.length === 0}>
+          Gerar Fase Eliminatória
+        </button>
       )}
 
       {elimination.length > 0 && (
         <EliminationStage 
           elimination={elimination} 
-          recordMatchResult={recordGroupResultsAutomatically} // Função para registrar automaticamente
+          recordMatchResult={recordGroupResult} 
         />
       )}
+
+      <button onClick={resetTournament}>Reiniciar Torneio</button>
+
+      {/* Mensagem de erro */}
+      {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
     </div>
   );
 };

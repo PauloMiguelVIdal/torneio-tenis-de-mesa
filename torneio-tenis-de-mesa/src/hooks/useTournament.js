@@ -7,6 +7,10 @@ const useTournament = () => {
   const [groupResults, setGroupResults] = useState({});
 
   const addParticipant = (name) => {
+    if (participants.includes(name)) {
+      alert('Este participante já foi adicionado.');
+      return;
+    }
     setParticipants([...participants, name]);
   };
 
@@ -33,10 +37,9 @@ const useTournament = () => {
   };
 
   const generateElimination = () => {
-    const qualifiedParticipants = Object.values(groupResults).flat(); // Pegamos os participantes classificados
+    const qualifiedParticipants = Object.values(groupResults).flat();
     if (qualifiedParticipants.length < 2) {
-      alert("Você precisa de pelo menos dois participantes para gerar a fase eliminatória.");
-      return;
+      throw new Error("Você precisa de pelo menos dois participantes para gerar a fase eliminatória.");
     }
 
     const matches = [];
@@ -58,6 +61,13 @@ const useTournament = () => {
     setGroupResults(newGroupResults);
   };
 
+  const resetTournament = () => {
+    setParticipants([]);
+    setGroups([]);
+    setElimination([]);
+    setGroupResults({});
+  };
+
   return {
     participants,
     groups,
@@ -68,6 +78,7 @@ const useTournament = () => {
     generateGroups,
     generateElimination,
     recordGroupResult,
+    resetTournament,
   };
 };
 
