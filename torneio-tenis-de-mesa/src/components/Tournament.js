@@ -1,3 +1,4 @@
+// Tournament.js
 import React, { useState } from 'react';
 import useTournament from '../hooks/useTournament';
 import ParticipantForm from './ParticipantForm';
@@ -34,6 +35,7 @@ const Tournament = () => {
   const handleGenerateElimination = () => {
     try {
       generateElimination();
+      console.log("Elimination stage generated:", elimination); // Log para verificar o conteúdo de `elimination`
       setErrorMessage('');
     } catch (error) {
       setErrorMessage(error.message);

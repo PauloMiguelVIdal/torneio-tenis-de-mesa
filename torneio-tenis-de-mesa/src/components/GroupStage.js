@@ -1,3 +1,4 @@
+// GroupStage.js
 import React, { useState } from 'react';
 
 const GroupStage = ({ groups, recordGroupResult, matchFormat }) => {

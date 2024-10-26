@@ -1,3 +1,4 @@
+// ParticipantForm.js
 import React, { useState } from 'react';
 
 const ParticipantForm = ({ addParticipant, participants, updateParticipant, removeParticipant }) => {
