@@ -1,9 +1,9 @@
-// Tournament.js
 import React, { useState } from 'react';
 import useTournament from '../hooks/useTournament';
 import ParticipantForm from './ParticipantForm';
 import GroupStage from './GroupStage';
 import EliminationStage from './EliminationStage';
+import PointsTable from './PointsTable';
 
 const Tournament = () => {
   const { 
@@ -17,6 +17,7 @@ const Tournament = () => {
     generateElimination, 
     recordGroupResult,
     resetTournament,
+    calculatePointsTable,
   } = useTournament();
 
   const [numGroups, setNumGroups] = useState(2);
@@ -29,13 +30,12 @@ const Tournament = () => {
       return;
     }
     setErrorMessage('');
-    generateGroups(numGroups, matchFormat);
+    generateGroups(numGroups);
   };
 
   const handleGenerateElimination = () => {
     try {
       generateElimination();
-      console.log("Elimination stage generated:", elimination); // Log para verificar o conteúdo de `elimination`
       setErrorMessage('');
     } catch (error) {
       setErrorMessage(error.message);
@@ -46,6 +46,7 @@ const Tournament = () => {
     <div>
       <h1>Torneio Tênis de Mesa</h1>
 
+      {/* Área de gerenciamento de participantes */}
       <ParticipantForm 
         addParticipant={addParticipant} 
         participants={participants} 
@@ -64,11 +65,18 @@ const Tournament = () => {
         </label>
       </div>
 
+      {/* Botão para gerar grupos */}
       <button onClick={handleGenerateGroups} disabled={participants.length < numGroups}>
         Gerar Grupos
       </button>
       
-      {groups.length > 0 && <GroupStage groups={groups} recordGroupResult={recordGroupResult} matchFormat={matchFormat} />}
+      {groups.length > 0 && (
+        <GroupStage 
+          groups={groups} 
+          recordGroupResult={recordGroupResult} 
+          matchFormat={matchFormat} // Passa o formato selecionado para GroupStage
+        />
+      )}
 
       {groups.length > 0 && (
         <button onClick={handleGenerateElimination} disabled={groups.length === 0}>
@@ -83,6 +91,10 @@ const Tournament = () => {
         />
       )}
 
+      {/* Tabela de pontos acumulados pelos participantes */}
+      <PointsTable pointsData={calculatePointsTable()} />
+
+      {/* Botão para reiniciar o torneio */}
       <button onClick={resetTournament}>Reiniciar Torneio</button>
 
       {/* Mensagem de erro */}

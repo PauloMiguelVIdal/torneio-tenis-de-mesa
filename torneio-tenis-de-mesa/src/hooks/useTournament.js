@@ -5,6 +5,7 @@ const useTournament = () => {
   const [groups, setGroups] = useState([]);
   const [elimination, setElimination] = useState([]);
   const [groupResults, setGroupResults] = useState({});
+  const [participantPoints, setParticipantPoints] = useState({});
 
   const addParticipant = (name) => {
     if (participants.includes(name)) {
@@ -51,14 +52,29 @@ const useTournament = () => {
     setElimination(matches);
   };
 
-  const recordGroupResult = (groupIndex, matchIndex, participant1, participant2, winner) => {
+  const recordGroupResult = (groupIndex, matchIndex, participant1, participant2, winner, points1, points2) => {
     const newGroupResults = { ...groupResults };
+    const newParticipantPoints = { ...participantPoints };
+
     if (!newGroupResults[groupIndex]) {
       newGroupResults[groupIndex] = [];
     }
 
+    // Atualiza o vencedor
     newGroupResults[groupIndex].push(winner);
+
+    // Inicializa os pontos feitos/sofridos se não existirem
+    if (!newParticipantPoints[participant1]) newParticipantPoints[participant1] = { feitos: 0, sofridos: 0 };
+    if (!newParticipantPoints[participant2]) newParticipantPoints[participant2] = { feitos: 0, sofridos: 0 };
+
+    // Atualiza pontos feitos e sofridos
+    newParticipantPoints[participant1].feitos += points1;
+    newParticipantPoints[participant1].sofridos += points2;
+    newParticipantPoints[participant2].feitos += points2;
+    newParticipantPoints[participant2].sofridos += points1;
+
     setGroupResults(newGroupResults);
+    setParticipantPoints(newParticipantPoints);
   };
 
   const resetTournament = () => {
@@ -66,6 +82,7 @@ const useTournament = () => {
     setGroups([]);
     setElimination([]);
     setGroupResults({});
+    setParticipantPoints({});
   };
 
   return {
@@ -79,6 +96,7 @@ const useTournament = () => {
     generateElimination,
     recordGroupResult,
     resetTournament,
+    participantPoints, // Adicione aqui para acessar no GroupStage
   };
 };
 
