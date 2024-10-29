@@ -1,103 +1,107 @@
+// src/hooks/useTournament.js
 import { useState } from 'react';
 
 const useTournament = () => {
-  const [participants, setParticipants] = useState([]);
-  const [groups, setGroups] = useState([]);
-  const [elimination, setElimination] = useState([]);
-  const [groupResults, setGroupResults] = useState({});
-  const [participantPoints, setParticipantPoints] = useState({});
+    const [participants, setParticipants] = useState([]);
+    const [results, setResults] = useState({});
+    const [pointsTable, setPointsTable] = useState([]);
+    const [matchFormat, setMatchFormat] = useState('MD1'); // Estado para o formato da partida
 
-  const addParticipant = (name) => {
-    if (participants.includes(name)) {
-      alert('Este participante já foi adicionado.');
-      return;
-    }
-    setParticipants([...participants, name]);
-  };
+    const addParticipant = (name) => {
+        if (!participants.includes(name)) {
+            setParticipants((prev) => [...prev, name]);
+        }
+    };
 
-  const updateParticipant = (oldName, newName) => {
-    const updatedParticipants = participants.map(participant => 
-      participant === oldName ? newName : participant
-    );
-    setParticipants(updatedParticipants);
-  };
+    const updateParticipant = (oldName, newName) => {
+        setParticipants((prev) =>
+            prev.map((participant) => (participant === oldName ? newName : participant))
+        );
+    };
 
-  const removeParticipant = (name) => {
-    setParticipants(participants.filter(participant => participant !== name));
-  };
+    const removeParticipant = (name) => {
+        setParticipants((prev) => prev.filter((participant) => participant !== name));
+    };
 
-  const generateGroups = (numGroups) => {
-    const shuffled = [...participants].sort(() => 0.5 - Math.random());
-    const newGroups = [];
-    const groupSize = Math.ceil(shuffled.length / numGroups);
+    const addResult = (match, score) => {
+        setResults((prev) => ({
+            ...prev,
+            [match]: score,
+        }));
+    };
 
-    for (let i = 0; i < numGroups; i++) {
-      newGroups.push(shuffled.slice(i * groupSize, (i + 1) * groupSize));
-    }
-    setGroups(newGroups);
-  };
+    const calculatePointsTable = () => {
+        const table = participants.map((participant) => ({
+            name: participant,
+            points: 0,
+            pointsMade: 0,
+            pointsAgainst: 0,
+            victories: 0,
+        }));
 
-  const generateElimination = () => {
-    const qualifiedParticipants = Object.values(groupResults).flat();
-    if (qualifiedParticipants.length < 2) {
-      throw new Error("Você precisa de pelo menos dois participantes para gerar a fase eliminatória.");
-    }
+        for (const match in results) {
+            const [player1, player2] = match.split('-');
+            const scores = results[match].split(':').map(Number);
+            const player1Stats = table.find((p) => p.name === player1);
+            const player2Stats = table.find((p) => p.name === player2);
 
-    const matches = [];
-    for (let i = 0; i < qualifiedParticipants.length; i += 2) {
-      if (qualifiedParticipants[i + 1]) {
-        matches.push([qualifiedParticipants[i], qualifiedParticipants[i + 1]]);
-      }
-    }
-    setElimination(matches);
-  };
+            if (matchFormat === 'MD3') {
+                // Lógica para MD3
+                const score1 = scores.reduce((acc, curr) => acc + (curr > scores[1] ? 1 : 0), 0);
+                const score2 = 3 - score1; // Total de sets é 3
 
-  const recordGroupResult = (groupIndex, matchIndex, participant1, participant2, winner, points1, points2) => {
-    const newGroupResults = { ...groupResults };
-    const newParticipantPoints = { ...participantPoints };
+                player1Stats.pointsMade += score1;
+                player2Stats.pointsMade += score2;
 
-    if (!newGroupResults[groupIndex]) {
-      newGroupResults[groupIndex] = [];
-    }
+                if (score1 === 2) {
+                    player1Stats.points += 3; // Vitória
+                    player1Stats.victories += 1;
+                } else if (score2 === 2) {
+                    player2Stats.points += 3; // Vitória
+                    player2Stats.victories += 1;
+                } else {
+                    player1Stats.points += 1; // Empate
+                    player2Stats.points += 1; // Empate
+                }
+            } else {
+                // Lógica para MD1
+                const [score1, score2] = scores;
 
-    // Atualiza o vencedor
-    newGroupResults[groupIndex].push(winner);
+                player1Stats.pointsMade += score1;
+                player2Stats.pointsMade += score2;
 
-    // Inicializa os pontos feitos/sofridos se não existirem
-    if (!newParticipantPoints[participant1]) newParticipantPoints[participant1] = { feitos: 0, sofridos: 0 };
-    if (!newParticipantPoints[participant2]) newParticipantPoints[participant2] = { feitos: 0, sofridos: 0 };
+                if (score1 > score2) {
+                    player1Stats.points += 3; // Vitória
+                    player1Stats.victories += 1;
+                } else if (score2 > score1) {
+                    player2Stats.points += 3; // Vitória
+                    player2Stats.victories += 1;
+                } else {
+                    player1Stats.points += 1; // Empate
+                    player2Stats.points += 1; // Empate
+                }
+            }
+        }
 
-    // Atualiza pontos feitos e sofridos
-    newParticipantPoints[participant1].feitos += points1;
-    newParticipantPoints[participant1].sofridos += points2;
-    newParticipantPoints[participant2].feitos += points2;
-    newParticipantPoints[participant2].sofridos += points1;
+        setPointsTable(table);
+    };
 
-    setGroupResults(newGroupResults);
-    setParticipantPoints(newParticipantPoints);
-  };
+    const changeMatchFormat = (format) => {
+        setMatchFormat(format);
+    };
 
-  const resetTournament = () => {
-    setParticipants([]);
-    setGroups([]);
-    setElimination([]);
-    setGroupResults({});
-    setParticipantPoints({});
-  };
-
-  return {
-    participants,
-    groups,
-    elimination,
-    addParticipant,
-    updateParticipant,
-    removeParticipant,
-    generateGroups,
-    generateElimination,
-    recordGroupResult,
-    resetTournament,
-    participantPoints, // Adicione aqui para acessar no GroupStage
-  };
+    return {
+        participants,
+        results,
+        pointsTable,
+        matchFormat, // Expondo o formato da partida
+        addParticipant,
+        updateParticipant,
+        removeParticipant,
+        addResult,
+        calculatePointsTable,
+        changeMatchFormat, // Função para alterar o formato da partida
+    };
 };
 
 export default useTournament;

@@ -1,7 +1,6 @@
-// GroupStage.js
 import React, { useState } from 'react';
 
-const GroupStage = ({ groups, recordGroupResult, matchFormat }) => {
+const GroupStage = ({ groups, recordGroupResults, matchFormat }) => {
   const [scores, setScores] = useState({});
   const [error, setError] = useState(null);
 
@@ -25,23 +24,33 @@ const GroupStage = ({ groups, recordGroupResult, matchFormat }) => {
     setError(null);
   };
 
-  const handleSubmitResult = (groupIndex, matchIndex, participant1, participant2) => {
-    const result = scores[`${groupIndex}-${matchIndex}`];
-    if (!result || !result[participant1] || !result[participant2]) {
-      setError('Por favor, preencha todos os pontos antes de submeter.');
-      return;
+  const handleSubmitAllResults = () => {
+    const allResults = [];
+
+    for (const [matchKey, matchData] of Object.entries(scores)) {
+      const [groupIndex, matchIndex] = matchKey.split('-').map(Number);
+      const participants = Object.keys(matchData);
+      const [participant1, participant2] = participants;
+
+      if (!matchData[participant1] || !matchData[participant2]) {
+        setError('Por favor, preencha todos os pontos antes de submeter.');
+        return;
+      }
+
+      const points1 = matchData[participant1].reduce((sum, score) => sum + score, 0);
+      const points2 = matchData[participant2].reduce((sum, score) => sum + score, 0);
+
+      allResults.push({
+        groupIndex,
+        matchIndex,
+        participant1,
+        participant2,
+        points1,
+        points2,
+      });
     }
 
-    let winner;
-    if (matchFormat === 'MD1') {
-      winner = result[participant1][0] > result[participant2][0] ? participant1 : participant2;
-    } else if (matchFormat === 'MD3') {
-      const totalPoints1 = result[participant1].reduce((sum, score) => sum + score, 0);
-      const totalPoints2 = result[participant2].reduce((sum, score) => sum + score, 0);
-      winner = totalPoints1 > totalPoints2 ? participant1 : participant2;
-    }
-
-    recordGroupResult(groupIndex, matchIndex, participant1, participant2, winner);
+    recordGroupResults(allResults);
     setError(null);
   };
 
@@ -59,7 +68,7 @@ const GroupStage = ({ groups, recordGroupResult, matchFormat }) => {
     <div>
       <h2>Fase de Grupos</h2>
       {error && <p style={{ color: 'red' }}>{error}</p>}
-      
+
       {groups.map((group, groupIndex) => (
         <div key={groupIndex} className="group-container">
           <h3>Grupo {groupIndex + 1}</h3>
@@ -67,7 +76,7 @@ const GroupStage = ({ groups, recordGroupResult, matchFormat }) => {
             {generateMatches(group).map((match, matchIndex) => (
               <li key={matchIndex}>
                 <p>{match[0]} vs {match[1]}</p>
-
+                
                 {matchFormat === 'MD1' ? (
                   <>
                     <input
@@ -101,14 +110,13 @@ const GroupStage = ({ groups, recordGroupResult, matchFormat }) => {
                     </div>
                   ))
                 )}
-                <button onClick={() => handleSubmitResult(groupIndex, matchIndex, match[0], match[1])}>
-                  Submeter Resultado
-                </button>
               </li>
             ))}
           </ul>
         </div>
       ))}
+
+      <button onClick={handleSubmitAllResults}>Submeter Todos os Resultados</button>
     </div>
   );
 };
