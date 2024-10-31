@@ -1,58 +1,114 @@
-// src/components/Tournament.js
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import useTournament from '../hooks/useTournament';
 import ParticipantForm from './ParticipantForm';
+import GroupStage from './GroupStage';
 
 const Tournament = () => {
     const {
         participants,
         pointsTable,
         addParticipant,
-        changeMatchFormat,
+        updateParticipant,
+        removeParticipant,
         calculatePointsTable,
+        matchFormat,
+        changeMatchFormat,
     } = useTournament();
 
-    const handleMatchResult = (match, score) => {
-        // Adiciona o resultado da partida
-        addResult(match, score);
-        calculatePointsTable();
+    const [showGroupStage, setShowGroupStage] = useState(false);
+    const [groups, setGroups] = useState([]);
+
+    useEffect(() => {
+        if (participants.length > 1) {
+            setShowGroupStage(true); // Mostrar a fase de grupos após o cadastro dos participantes
+            setupGroups(participants);
+        }
+    }, [participants]);
+
+    const setupGroups = (participants) => {
+        let groupCount = 1;
+
+        if (participants.length >= 6 && participants.length <= 10) {
+            groupCount = 2;
+        } else if (participants.length >= 11 && participants.length <= 16) {
+            groupCount = 4;
+        } else if (participants.length >= 17 && participants.length <= 24) {
+            groupCount = 4;
+        } else if (participants.length > 24) {
+            groupCount = 8;
+        }
+
+        const groupsArray = Array.from({ length: groupCount }, () => []);
+        participants.forEach((participant, index) => {
+            groupsArray[index % groupCount].push(participant);
+        });
+
+        setGroups(groupsArray);
+    };
+
+    const handleRecordGroupResults = (results) => {
+        calculatePointsTable(results); // Atualizar a tabela de pontos com os resultados dos grupos
+    };
+
+    const handleFormatChange = (e) => {
+        changeMatchFormat(e.target.value);
     };
 
     return (
         <div>
-            <h1>Torneio de Tênis de Mesa</h1>
-            <select onChange={(e) => changeMatchFormat(e.target.value)} value={matchFormat}>
-                <option value="MD1">Melhor de 1</option>
-                <option value="MD3">Melhor de 3</option>
-            </select>
+            <h1>Torneio</h1>
+            <label>
+                Formato da Partida:
+                <select value={matchFormat} onChange={handleFormatChange}>
+                    <option value="MD1">MD1</option>
+                    <option value="MD3">MD3</option>
+                </select>
+            </label>
+
             <ParticipantForm
                 addParticipant={addParticipant}
                 participants={participants}
-                // Adicione outras props necessárias
+                updateParticipant={updateParticipant}
+                removeParticipant={removeParticipant}
             />
-            <h2>Tabela de Pontos</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Participante</th>
-                        <th>Pontos</th>
-                        <th>Pontos Feitos</th>
-                        <th>Pontos Sofridos</th>
-                        <th>Vitórias</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {pointsTable.map((participant) => (
-                        <tr key={participant.name}>
-                            <td>{participant.name}</td>
-                            <td>{participant.points}</td>
-                            <td>{participant.pointsMade}</td>
-                            <td>{participant.pointsAgainst}</td>
-                            <td>{participant.victories}</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+
+            {showGroupStage && (
+                <GroupStage
+                    participants={participants}
+                    groups={groups} // Passa os grupos gerados
+                    setGroups={setGroups} // Passa setGroups para o GroupStage
+                    recordGroupResults={handleRecordGroupResults}
+                    matchFormat={matchFormat}
+                />
+            )}
+
+            {pointsTable.length > 0 && (
+                <div>
+                    <h2>Tabela de Pontos</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Participante</th>
+                                <th>Pontos</th>
+                                <th>Pontos Feitos</th>
+                                <th>Pontos Sofridos</th>
+                                <th>Vitórias</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {pointsTable.map((row) => (
+                                <tr key={row.name}>
+                                    <td>{row.name}</td>
+                                    <td>{row.points}</td>
+                                    <td>{row.pointsMade}</td>
+                                    <td>{row.pointsAgainst}</td>
+                                    <td>{row.victories}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
         </div>
     );
 };
