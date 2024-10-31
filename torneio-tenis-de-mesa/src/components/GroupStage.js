@@ -17,30 +17,32 @@ const GroupStage = ({ participants, groups, setGroups, recordGroupResults, match
             [matchKey]: {
                 ...prevScores[matchKey],
                 [participant]: [
-                    ...(prevScores[matchKey]?.[participant] || []),
-                ]
-            }
+                    ...((prevScores[matchKey]?.[participant] || []).slice(0, scoreIndex)),
+                    score,
+                    ...((prevScores[matchKey]?.[participant] || []).slice(scoreIndex + 1)),
+                ],
+            },
         }));
-    
         setError(null);
     };
+    
 
     const handleSubmitAllResults = () => {
         const allResults = [];
-
+    
         for (const [matchKey, matchData] of Object.entries(scores)) {
             const [groupIndex, matchIndex] = matchKey.split('-').map(Number);
             const participants = Object.keys(matchData);
             const [participant1, participant2] = participants;
-
-            if (!matchData[participant1] || !matchData[participant2]) {
+    
+            if (!Array.isArray(matchData[participant1]) || !Array.isArray(matchData[participant2])) {
                 setError('Por favor, preencha todos os pontos antes de submeter.');
                 return;
             }
-
+    
             const points1 = matchData[participant1].reduce((sum, score) => sum + score, 0);
             const points2 = matchData[participant2].reduce((sum, score) => sum + score, 0);
-
+    
             allResults.push({
                 groupIndex,
                 matchIndex,
@@ -50,10 +52,11 @@ const GroupStage = ({ participants, groups, setGroups, recordGroupResults, match
                 points2,
             });
         }
-
+    
         recordGroupResults(allResults);
         setError(null);
     };
+    
 
     const generateMatches = (group) => {
         const matches = [];

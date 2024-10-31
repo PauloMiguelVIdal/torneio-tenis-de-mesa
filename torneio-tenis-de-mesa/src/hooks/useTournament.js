@@ -30,7 +30,7 @@ const useTournament = () => {
         }));
     };
 
-    const calculatePointsTable = () => {
+    const calculatePointsTable = (results) => {
         const table = participants.map((participant) => ({
             name: participant,
             points: 0,
@@ -38,53 +38,35 @@ const useTournament = () => {
             pointsAgainst: 0,
             victories: 0,
         }));
-
-        for (const match in results) {
-            const [player1, player2] = match.split('-');
-            const scores = results[match].split(':').map(Number);
-            const player1Stats = table.find((p) => p.name === player1);
-            const player2Stats = table.find((p) => p.name === player2);
-
-            if (matchFormat === 'MD3') {
-                // Lógica para MD3
-                const score1 = scores.reduce((acc, curr) => acc + (curr > scores[1] ? 1 : 0), 0);
-                const score2 = 3 - score1; // Total de sets é 3
-
-                player1Stats.pointsMade += score1;
-                player2Stats.pointsMade += score2;
-
-                if (score1 === 2) {
-                    player1Stats.points += 3; // Vitória
-                    player1Stats.victories += 1;
-                } else if (score2 === 2) {
-                    player2Stats.points += 3; // Vitória
-                    player2Stats.victories += 1;
-                } else {
-                    player1Stats.points += 1; // Empate
-                    player2Stats.points += 1; // Empate
-                }
+    
+        results.forEach((result) => {
+            const { participant1, participant2, points1, points2 } = result;
+    
+            const player1Stats = table.find((p) => p.name === participant1);
+            const player2Stats = table.find((p) => p.name === participant2);
+    
+            // Atualiza pontos feitos e sofridos
+            player1Stats.pointsMade += points1;
+            player1Stats.pointsAgainst += points2;
+            player2Stats.pointsMade += points2;
+            player2Stats.pointsAgainst += points1;
+    
+            // Calcula vitórias, derrotas e empates
+            if (points1 > points2) {
+                player1Stats.points += 3;
+                player1Stats.victories += 1;
+            } else if (points2 > points1) {
+                player2Stats.points += 3;
+                player2Stats.victories += 1;
             } else {
-                // Lógica para MD1
-                const [score1, score2] = scores;
-
-                player1Stats.pointsMade += score1;
-                player2Stats.pointsMade += score2;
-
-                if (score1 > score2) {
-                    player1Stats.points += 3; // Vitória
-                    player1Stats.victories += 1;
-                } else if (score2 > score1) {
-                    player2Stats.points += 3; // Vitória
-                    player2Stats.victories += 1;
-                } else {
-                    player1Stats.points += 1; // Empate
-                    player2Stats.points += 1; // Empate
-                }
+                player1Stats.points += 1;
+                player2Stats.points += 1;
             }
-        }
-
+        });
+    
         setPointsTable(table);
     };
+    
 
     const changeMatchFormat = (format) => {
         setMatchFormat(format);
