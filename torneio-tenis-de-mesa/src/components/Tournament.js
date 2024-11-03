@@ -20,31 +20,39 @@ const Tournament = () => {
 
     useEffect(() => {
         if (participants.length > 1) {
-            setShowGroupStage(true); // Mostrar a fase de grupos após o cadastro dos participantes
-            setupGroups(participants);
+        setupGroups(participants);
+        setShowGroupStage(true); // Mostrar a fase de grupos após a geração dos grupos
         }
-    }, [participants]);
+        }, [participants]);
+        
+const setupGroups = (participants) => {
+    const numParticipants = participants.length;
+    let groupCount;
 
-    const setupGroups = (participants) => {
-        let groupCount = 1;
+    // Definir o número de grupos
+    if (numParticipants === 10) {
+        groupCount = 2; // Força 2 grupos para 10 participantes
+    } else if (numParticipants <= 5) {
+        groupCount = 1;
+    } else if (numParticipants <= 16) {
+        groupCount = Math.ceil(numParticipants / 4);
+    } else {
+        groupCount = Math.ceil(numParticipants / 5);
+    }
 
-        if (participants.length >= 6 && participants.length <= 10) {
-            groupCount = 2;
-        } else if (participants.length >= 11 && participants.length <= 16) {
-            groupCount = 4;
-        } else if (participants.length >= 17 && participants.length <= 24) {
-            groupCount = 4;
-        } else if (participants.length > 24) {
-            groupCount = 8;
-        }
+    // Cria o array de grupos com o número determinado
+    const groupsArray = Array.from({ length: groupCount }, () => []);
 
-        const groupsArray = Array.from({ length: groupCount }, () => []);
-        participants.forEach((participant, index) => {
-            groupsArray[index % groupCount].push(participant);
-        });
+    // Distribui os participantes entre os grupos
+    participants.forEach((participant, index) => {
+        groupsArray[index % groupCount].push(participant);
+    });
 
-        setGroups(groupsArray);
-    };
+    setGroups(groupsArray);
+};
+
+    
+    
 
     const handleRecordGroupResults = (results) => {
         calculatePointsTable(results); // Atualizar a tabela de pontos com os resultados dos grupos
