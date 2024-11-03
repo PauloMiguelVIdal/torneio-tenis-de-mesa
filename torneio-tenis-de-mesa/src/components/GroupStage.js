@@ -51,6 +51,8 @@ const GroupStage = ({ participants, groups, setGroups, recordGroupResults, match
                 points1,
                 points2,
             });
+
+    
         }
     
         recordGroupResults(allResults);

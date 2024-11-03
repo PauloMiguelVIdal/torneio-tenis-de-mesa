@@ -37,20 +37,21 @@ const useTournament = () => {
             pointsMade: 0,
             pointsAgainst: 0,
             victories: 0,
+            goalDifference: 0, // Saldo de pontos inicializado
         }));
-    
+
         results.forEach((result) => {
             const { participant1, participant2, points1, points2 } = result;
-    
+
             const player1Stats = table.find((p) => p.name === participant1);
             const player2Stats = table.find((p) => p.name === participant2);
-    
+
             // Atualiza pontos feitos e sofridos
             player1Stats.pointsMade += points1;
             player1Stats.pointsAgainst += points2;
             player2Stats.pointsMade += points2;
             player2Stats.pointsAgainst += points1;
-    
+
             // Calcula vitórias, derrotas e empates
             if (points1 > points2) {
                 player1Stats.points += 3;
@@ -63,10 +64,14 @@ const useTournament = () => {
                 player2Stats.points += 1;
             }
         });
-    
+
+        // Calcular saldo de pontos para cada jogador
+        table.forEach((player) => {
+            player.goalDifference = player.pointsMade - player.pointsAgainst; // Saldo de pontos
+        });
+
         setPointsTable(table);
     };
-    
 
     const changeMatchFormat = (format) => {
         setMatchFormat(format);
