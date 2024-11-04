@@ -4,13 +4,14 @@ const GroupStage = ({ participants, groups, setGroups, recordGroupResults, match
     const [scores, setScores] = useState({});
     const [error, setError] = useState(null);
     const [generated, setGenerated] = useState(false);
+    const [groupWinners, setGroupWinners] = useState([]); // Armazena os vencedores de cada grupo
 
     const handleScoreChange = (groupIndex, matchIndex, participant, scoreIndex, score) => {
         if (score < 0) {
             setError('Score não pode ser negativo.');
             return;
         }
-    
+
         const matchKey = `${groupIndex}-${matchIndex}`;
         setScores((prevScores) => ({
             ...prevScores,
@@ -25,40 +26,45 @@ const GroupStage = ({ participants, groups, setGroups, recordGroupResults, match
         }));
         setError(null);
     };
-    
 
     const handleSubmitAllResults = () => {
         const allResults = [];
-    
-        for (const [matchKey, matchData] of Object.entries(scores)) {
-            const [groupIndex, matchIndex] = matchKey.split('-').map(Number);
-            const participants = Object.keys(matchData);
-            const [participant1, participant2] = participants;
-    
-            if (!Array.isArray(matchData[participant1]) || !Array.isArray(matchData[participant2])) {
-                setError('Por favor, preencha todos os pontos antes de submeter.');
-                return;
-            }
-    
-            const points1 = matchData[participant1].reduce((sum, score) => sum + score, 0);
-            const points2 = matchData[participant2].reduce((sum, score) => sum + score, 0);
-    
-            allResults.push({
-                groupIndex,
-                matchIndex,
-                participant1,
-                participant2,
-                points1,
-                points2,
-            });
+        const winners = []; // Para armazenar vencedores de cada grupo
 
-    
-        }
-    
+        // Processa os resultados de cada grupo
+        groups.forEach((group, groupIndex) => {
+            const groupResults = {};
+
+            for (const [matchKey, matchData] of Object.entries(scores)) {
+                const [groupIndexKey] = matchKey.split('-').map(Number);
+                if (groupIndex === groupIndexKey) {
+                    const participants = Object.keys(matchData);
+                    const [participant1, participant2] = participants;
+                    const points1 = matchData[participant1].reduce((sum, score) => sum + score, 0);
+                    const points2 = matchData[participant2].reduce((sum, score) => sum + score, 0);
+
+                    // Armazena o total de pontos para cada participante no grupo
+                    if (!groupResults[participant1]) groupResults[participant1] = 0;
+                    if (!groupResults[participant2]) groupResults[participant2] = 0;
+
+                    groupResults[participant1] += points1;
+                    groupResults[participant2] += points2;
+                }
+            }
+
+            // Determina o(s) vencedor(es) do grupo com base na lógica do tamanho do grupo
+            const sortedParticipants = Object.entries(groupResults).sort((a, b) => b[1] - a[1]);
+            if (group.length === 2 || group.length === 3) {
+                winners.push(sortedParticipants[0][0]); // Apenas o primeiro passa
+            } else if (group.length >= 4) {
+                winners.push(sortedParticipants[0][0], sortedParticipants[1][0]); // Os dois primeiros passam
+            }
+        });
+
+        setGroupWinners(winners); // Atualiza o estado com os vencedores
         recordGroupResults(allResults);
         setError(null);
     };
-    
 
     const generateMatches = (group) => {
         const matches = [];
@@ -144,6 +150,17 @@ const GroupStage = ({ participants, groups, setGroups, recordGroupResults, match
             ))}
 
             {generated && <button onClick={handleSubmitAllResults}>Submeter Todos os Resultados</button>}
+
+            {groupWinners.length > 0 && (
+                <div>
+                    <h3>Vencedores da Fase de Grupos</h3>
+                    <ul>
+                        {groupWinners.map((winner, index) => (
+                            <li key={index}>{winner}</li>
+                        ))}
+                    </ul>
+                </div>
+            )}
         </div>
     );
 };

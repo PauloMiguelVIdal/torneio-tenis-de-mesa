@@ -16,7 +16,7 @@ const Tournament = () => {
     } = useTournament();
 
     const [showGroupStage, setShowGroupStage] = useState(false);
-    const [groups, setGroups] = useState([]);
+    const [groups, setGroups] = useState({});
     const [winnersGroup, setWinnersGroup] = useState([]); // Adicionando estado para os vencedores
 
     useEffect(() => {
@@ -29,7 +29,7 @@ const Tournament = () => {
     const setupGroups = (participants) => {
         const numParticipants = participants.length;
         let groupCount;
-
+    
         if (numParticipants === 10) {
             groupCount = 2;
         } else if (numParticipants <= 5) {
@@ -39,15 +39,20 @@ const Tournament = () => {
         } else {
             groupCount = Math.ceil(numParticipants / 5);
         }
-
-        const groupsArray = Array.from({ length: groupCount }, () => []);
-
+    
+        const groupsObj = {};
+    
         participants.forEach((participant, index) => {
-            groupsArray[index % groupCount].push(participant);
+            const groupIndex = `group${(index % groupCount) + 1}`;
+            if (!groupsObj[groupIndex]) {
+                groupsObj[groupIndex] = [];
+            }
+            groupsObj[groupIndex].push(participant.name);
         });
-
-        setGroups(groupsArray);
+    
+        setGroups(groupsObj);
     };
+    
 
     const handleRecordGroupResults = (results) => {
         calculatePointsTable(results); // Atualizar a tabela de pontos com os resultados dos grupos
@@ -56,27 +61,27 @@ const Tournament = () => {
 
     const determineWinners = () => {
         const winners = [];
-
-        groups.forEach((group) => {
+    
+        Object.keys(groups).forEach((groupKey) => {
+            const group = groups[groupKey];
             const groupResults = pointsTable.filter((participant) => group.includes(participant.name));
             const sortedGroupResults = groupResults.sort((a, b) => {
-                // Ordena por pontos e saldo de pontos
                 if (b.points !== a.points) {
                     return b.points - a.points;
                 }
                 return (b.pointsMade - b.pointsAgainst) - (a.pointsMade - a.pointsAgainst);
             });
-
-            // Lógica para determinar quantos passam
+    
             if (sortedGroupResults.length === 2 || sortedGroupResults.length === 3) {
-                winners.push(sortedGroupResults[0].name); // 1 passa
+                winners.push(sortedGroupResults[0].name);
             } else if (sortedGroupResults.length === 4) {
-                winners.push(sortedGroupResults[0].name, sortedGroupResults[1].name); // 2 passam
+                winners.push(sortedGroupResults[0].name, sortedGroupResults[1].name);
             }
         });
-
-        setWinnersGroup(winners); // Atualiza o estado com os vencedores da fase de grupos
+    
+        setWinnersGroup(winners);
     };
+    
 
     const handleFormatChange = (e) => {
         changeMatchFormat(e.target.value);
@@ -94,7 +99,6 @@ const Tournament = () => {
         return goalDifferenceB - goalDifferenceA;
     });
 
-   
     return (
         <div>
             <h1>Torneio</h1>
