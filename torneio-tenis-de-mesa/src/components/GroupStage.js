@@ -30,28 +30,39 @@ const GroupStage = ({ participants, groups, setGroups, recordGroupResults, match
     const handleSubmitAllResults = () => {
         const allResults = [];
         const winners = []; // Para armazenar vencedores de cada grupo
-
+    
         // Processa os resultados de cada grupo
         groups.forEach((group, groupIndex) => {
             const groupResults = {};
-
-            for (const [matchKey, matchData] of Object.entries(scores)) {
-                const [groupIndexKey] = matchKey.split('-').map(Number);
-                if (groupIndex === groupIndexKey) {
+    
+            generateMatches(group).forEach((match, matchIndex) => {
+                const matchKey = `${groupIndex}-${matchIndex}`;
+                const matchData = scores[matchKey];
+                if (matchData) {
                     const participants = Object.keys(matchData);
                     const [participant1, participant2] = participants;
                     const points1 = matchData[participant1].reduce((sum, score) => sum + score, 0);
                     const points2 = matchData[participant2].reduce((sum, score) => sum + score, 0);
-
+    
                     // Armazena o total de pontos para cada participante no grupo
                     if (!groupResults[participant1]) groupResults[participant1] = 0;
                     if (!groupResults[participant2]) groupResults[participant2] = 0;
-
+    
                     groupResults[participant1] += points1;
                     groupResults[participant2] += points2;
+    
+                    // Adiciona o resultado da partida ao array allResults para registro detalhado
+                    allResults.push({
+                        groupIndex,
+                        matchIndex,
+                        participant1,
+                        participant2,
+                        points1,
+                        points2,
+                    });
                 }
-            }
-
+            });
+    
             // Determina o(s) vencedor(es) do grupo com base na lógica do tamanho do grupo
             const sortedParticipants = Object.entries(groupResults).sort((a, b) => b[1] - a[1]);
             if (group.length === 2 || group.length === 3) {
@@ -60,11 +71,12 @@ const GroupStage = ({ participants, groups, setGroups, recordGroupResults, match
                 winners.push(sortedParticipants[0][0], sortedParticipants[1][0]); // Os dois primeiros passam
             }
         });
-
+    
         setGroupWinners(winners); // Atualiza o estado com os vencedores
-        recordGroupResults(allResults);
+        recordGroupResults(allResults); // Envia o resultado detalhado
         setError(null);
     };
+    
 
     const generateMatches = (group) => {
         const matches = [];
