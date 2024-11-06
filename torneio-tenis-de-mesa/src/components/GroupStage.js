@@ -71,12 +71,28 @@ const GroupStage = ({ participants, groups, setGroups, recordGroupResults, match
                 winners.push(sortedParticipants[0][0], sortedParticipants[1][0]); // Os dois primeiros passam
             }
         });
+
+        // Garante que o número de vencedores seja par
+        if (winners.length % 2 !== 0) {
+            // Ordena os participantes de acordo com os pontos totais e encontra o próximo melhor
+            const remainingParticipants = Object.entries(scores).flatMap(([_, matchData]) =>
+                Object.keys(matchData).map((participant) => ({
+                    participant,
+                    totalPoints: Object.values(matchData[participant] || []).reduce((sum, score) => sum + score, 0),
+                }))
+            );
+            
+            // Ordena para encontrar o próximo melhor
+            remainingParticipants.sort((a, b) => b.totalPoints - a.totalPoints);
+
+            const nextBest = remainingParticipants.find(({ participant }) => !winners.includes(participant));
+            if (nextBest) winners.push(nextBest.participant);
+        }
     
         setGroupWinners(winners); // Atualiza o estado com os vencedores
         recordGroupResults(allResults); // Envia o resultado detalhado
         setError(null);
     };
-    
 
     const generateMatches = (group) => {
         const matches = [];
