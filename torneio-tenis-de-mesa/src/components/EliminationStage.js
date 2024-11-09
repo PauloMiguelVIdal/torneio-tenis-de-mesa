@@ -17,7 +17,6 @@ const Tournament = () => {
     recordGroupResult,  // use this function
   } = useTournament();
 
-  const [numGroups, setNumGroups] = useState(2);
 
   return (
     <div>

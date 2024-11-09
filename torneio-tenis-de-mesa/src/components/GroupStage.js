@@ -5,14 +5,14 @@ const GroupStage = ({ participants, groups, setGroups, recordGroupResults, match
     const [error, setError] = useState(null);
     const [generated, setGenerated] = useState(false);
     const [groupWinners, setGroupWinners] = useState([]); // Armazena os vencedores de cada grupo
+    const [bracket, setBracket] = useState([]); // Para armazenar o chaveamento
 
-    const handleScoreChange = (groupIndex, matchIndex, participant, scoreIndex, score) => {
+    const handleScoreChange = (matchKey, participant, scoreIndex, score) => {
         if (score < 0) {
             setError('Score não pode ser negativo.');
             return;
         }
 
-        const matchKey = `${groupIndex}-${matchIndex}`;
         setScores((prevScores) => ({
             ...prevScores,
             [matchKey]: {
@@ -90,6 +90,8 @@ const GroupStage = ({ participants, groups, setGroups, recordGroupResults, match
         }
     
         setGroupWinners(winners); // Atualiza o estado com os vencedores
+        const newBracket = createBracket(winners); // Cria o chaveamento
+        setBracket(newBracket); // Atualiza o estado com o chaveamento
         recordGroupResults(allResults); // Envia o resultado detalhado
         setError(null);
     };
@@ -102,6 +104,36 @@ const GroupStage = ({ participants, groups, setGroups, recordGroupResults, match
             }
         }
         return matches;
+    };
+
+    const createBracket = (winners) => {
+        let rounds = [];
+        while (winners.length > 1) {
+            let currentRound = [];
+            for (let i = 0; i < winners.length; i += 2) {
+                if (i + 1 < winners.length) {
+                    currentRound.push([winners[i], winners[i + 1]]);
+                } else {
+                    // Em caso de número ímpar, o último vencedor avança automaticamente
+                    currentRound.push([winners[i], null]);
+                }
+            }
+            rounds.push(currentRound);
+            winners = currentRound.map(match => {
+                // Simulação para determinar os vencedores das partidas, você deve adaptar isso
+                const winner = simulateMatch(match[0], match[1]);
+                return winner;
+            }).filter(winner => winner !== null); // Remover as entradas nulas
+        }
+        return rounds;
+    };
+
+    const simulateMatch = (participant1, participant2) => {
+        if (participant2 === null) {
+            return participant1; // Avança automaticamente se não há oponente
+        }
+        // Simulação simplificada, adapte conforme necessário
+        return Math.random() > 0.5 ? participant1 : participant2;
     };
 
     const handleGenerateGroups = () => {
@@ -144,13 +176,13 @@ const GroupStage = ({ participants, groups, setGroups, recordGroupResults, match
                                             type="number"
                                             placeholder={`Ponto de ${match[0]}`}
                                             min="0"
-                                            onChange={(e) => handleScoreChange(groupIndex, matchIndex, match[0], 0, parseInt(e.target.value) || 0)}
+                                            onChange={(e) => handleScoreChange(`${groupIndex}-${matchIndex}`, match[0], 0, parseInt(e.target.value) || 0)}
                                         />
                                         <input
                                             type="number"
                                             placeholder={`Ponto de ${match[1]}`}
                                             min="0"
-                                            onChange={(e) => handleScoreChange(groupIndex, matchIndex, match[1], 0, parseInt(e.target.value) || 0)}
+                                            onChange={(e) => handleScoreChange(`${groupIndex}-${matchIndex}`, match[1], 0, parseInt(e.target.value) || 0)}
                                         />
                                     </>
                                 ) : (
@@ -160,13 +192,13 @@ const GroupStage = ({ participants, groups, setGroups, recordGroupResults, match
                                                 type="number"
                                                 placeholder={`Ponto ${scoreIndex + 1} de ${match[0]}`}
                                                 min="0"
-                                                onChange={(e) => handleScoreChange(groupIndex, matchIndex, match[0], scoreIndex, parseInt(e.target.value) || 0)}
+                                                onChange={(e) => handleScoreChange(`${groupIndex}-${matchIndex}`, match[0], scoreIndex, parseInt(e.target.value) || 0)}
                                             />
                                             <input
                                                 type="number"
                                                 placeholder={`Ponto ${scoreIndex + 1} de ${match[1]}`}
                                                 min="0"
-                                                onChange={(e) => handleScoreChange(groupIndex, matchIndex, match[1], scoreIndex, parseInt(e.target.value) || 0)}
+                                                onChange={(e) => handleScoreChange(`${groupIndex}-${matchIndex}`, match[1], scoreIndex, parseInt(e.target.value) || 0)}
                                             />
                                         </div>
                                     ))
@@ -187,6 +219,63 @@ const GroupStage = ({ participants, groups, setGroups, recordGroupResults, match
                             <li key={index}>{winner}</li>
                         ))}
                     </ul>
+                </div>
+            )}
+
+            {bracket.length > 0 && (
+                <div>
+                    <h3>Chaveamento</h3>
+                    {bracket.map((round, roundIndex) => (
+                        <div key={roundIndex}>
+                            <h4>Rodada {roundIndex + 1}</h4>
+                            <ul>
+                                {round.map((match, matchIndex) => (
+                                    <li key={matchIndex}>
+                                        {match[1] ? (
+                                            <div>
+                                                <p>{match[0]} vs {match[1]}</p>
+                                                {matchFormat === 'MD1' ? (
+                                                    <>
+                                                        <input
+                                                            type="number"
+                                                            placeholder={`Ponto de ${match[0]}`}
+                                                            min="0"
+                                                            onChange={(e) => handleScoreChange(`bracket-${roundIndex}-${matchIndex}`, match[0], 0, parseInt(e.target.value) || 0)}
+                                                        />
+                                                        <input
+                                                            type="number"
+                                                            placeholder={`Ponto de ${match[1]}`}
+                                                            min="0"
+                                                            onChange={(e) => handleScoreChange(`bracket-${roundIndex}-${matchIndex}`, match[1], 0, parseInt(e.target.value) || 0)}
+                                                        />
+                                                    </>
+                                                ) : (
+                                                    [0, 1, 2].map((scoreIndex) => (
+                                                        <div key={scoreIndex}>
+                                                            <input
+                                                                type="number"
+                                                                placeholder={`Ponto ${scoreIndex + 1} de ${match[0]}`}
+                                                                min="0"
+                                                                onChange={(e) => handleScoreChange(`bracket-${roundIndex}-${matchIndex}`, match[0], scoreIndex, parseInt(e.target.value) || 0)}
+                                                            />
+                                                            <input
+                                                                type="number"
+                                                                placeholder={`Ponto ${scoreIndex + 1} de ${match[1]}`}
+                                                                min="0"
+                                                                onChange={(e) => handleScoreChange(`bracket-${roundIndex}-${matchIndex}`, match[1], scoreIndex, parseInt(e.target.value) || 0)}
+                                                            />
+                                                        </div>
+                                                    ))
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <p>{match[0]} avança automaticamente</p>
+                                        )}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    ))}
                 </div>
             )}
         </div>

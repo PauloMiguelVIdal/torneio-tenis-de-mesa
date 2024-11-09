@@ -30,28 +30,40 @@ const Tournament = () => {
         const numParticipants = participants.length;
         let groupCount;
     
-        if (numParticipants === 10) {
-            groupCount = 2;
-        } else if (numParticipants <= 5) {
+        // Definindo o número de grupos com base nas regras especificadas
+        if (numParticipants <= 3) {
             groupCount = 1;
-        } else if (numParticipants <= 16) {
-            groupCount = Math.ceil(numParticipants / 4);
+        } else if (numParticipants <= 6) {
+            groupCount = 2;
+        } else if (numParticipants <= 12) {
+            groupCount = 3; // Ajustado para incluir 10 participantes com 3 grupos
+        } else if (numParticipants <= 20) {
+            groupCount = 4;
         } else {
-            groupCount = Math.ceil(numParticipants / 5);
+            groupCount = 6;
         }
     
         const groupsObj = {};
     
+        // Inicializando os arrays dos grupos (A, B, C, etc.)
+        for (let i = 0; i < groupCount; i++) {
+            const groupName = `group${String.fromCharCode(65 + i)}`;
+            groupsObj[groupName] = [];
+        }
+    
+        // Distribuindo participantes de forma cíclica conforme o índice
         participants.forEach((participant, index) => {
-            const groupIndex = `group${(index % groupCount) + 1}`;
-            if (!groupsObj[groupIndex]) {
-                groupsObj[groupIndex] = [];
-            }
-            groupsObj[groupIndex].push(participant.name);
+            const groupIndex = index % groupCount;
+            const groupName = `group${String.fromCharCode(65 + groupIndex)}`;
+            groupsObj[groupName].push(participant.name);
         });
     
         setGroups(groupsObj);
     };
+    
+    
+    
+    
     
 
     const handleRecordGroupResults = (results) => {
