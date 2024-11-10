@@ -27,14 +27,14 @@ const GroupStage = ({ participants, groups, setGroups, recordGroupResults, match
         setError(null);
     };
 
-    const handleSubmitAllResults = () => {
+    const handleSubmitGroupResults = () => {
         const allResults = [];
         const winners = []; // Para armazenar vencedores de cada grupo
-    
+
         // Processa os resultados de cada grupo
         groups.forEach((group, groupIndex) => {
             const groupResults = {};
-    
+
             generateMatches(group).forEach((match, matchIndex) => {
                 const matchKey = `${groupIndex}-${matchIndex}`;
                 const matchData = scores[matchKey];
@@ -43,14 +43,14 @@ const GroupStage = ({ participants, groups, setGroups, recordGroupResults, match
                     const [participant1, participant2] = participants;
                     const points1 = matchData[participant1].reduce((sum, score) => sum + score, 0);
                     const points2 = matchData[participant2].reduce((sum, score) => sum + score, 0);
-    
+
                     // Armazena o total de pontos para cada participante no grupo
                     if (!groupResults[participant1]) groupResults[participant1] = 0;
                     if (!groupResults[participant2]) groupResults[participant2] = 0;
-    
+
                     groupResults[participant1] += points1;
                     groupResults[participant2] += points2;
-    
+
                     // Adiciona o resultado da partida ao array allResults para registro detalhado
                     allResults.push({
                         groupIndex,
@@ -62,38 +62,46 @@ const GroupStage = ({ participants, groups, setGroups, recordGroupResults, match
                     });
                 }
             });
-    
+
             // Determina o(s) vencedor(es) do grupo com base na lógica do tamanho do grupo
             const sortedParticipants = Object.entries(groupResults).sort((a, b) => b[1] - a[1]);
-            if (group.length === 2 || group.length === 3) {
-                winners.push(sortedParticipants[0][0]); // Apenas o primeiro passa
-            } else if (group.length >= 4) {
-                winners.push(sortedParticipants[0][0], sortedParticipants[1][0]); // Os dois primeiros passam
+
+            // Adiciona 4 ou 8 vencedores com base no número de participantes
+            if (participants.length <= 31) {
+                winners.push(...sortedParticipants.slice(0, 4).map(p => p[0]));
+            } else {
+                winners.push(...sortedParticipants.slice(0, 8).map(p => p[0]));
             }
         });
 
-        // Garante que o número de vencedores seja par
-        if (winners.length % 2 !== 0) {
-            // Ordena os participantes de acordo com os pontos totais e encontra o próximo melhor
-            const remainingParticipants = Object.entries(scores).flatMap(([_, matchData]) =>
-                Object.keys(matchData).map((participant) => ({
-                    participant,
-                    totalPoints: Object.values(matchData[participant] || []).reduce((sum, score) => sum + score, 0),
-                }))
-            );
-            
-            // Ordena para encontrar o próximo melhor
-            remainingParticipants.sort((a, b) => b.totalPoints - a.totalPoints);
-
-            const nextBest = remainingParticipants.find(({ participant }) => !winners.includes(participant));
-            if (nextBest) winners.push(nextBest.participant);
-        }
-    
         setGroupWinners(winners); // Atualiza o estado com os vencedores
-        const newBracket = createBracket(winners); // Cria o chaveamento
-        setBracket(newBracket); // Atualiza o estado com o chaveamento
         recordGroupResults(allResults); // Envia o resultado detalhado
         setError(null);
+    };
+
+    const handleSubmitBracketResults = () => {
+        const updatedBracket = bracket.map((round, roundIndex) =>
+            round.map((match, matchIndex) => {
+                const matchKey = `bracket-${roundIndex}-${matchIndex}`;
+                const matchData = scores[matchKey];
+                if (matchData) {
+                    const participants = Object.keys(matchData);
+                    const [participant1, participant2] = participants;
+                    const points1 = matchData[participant1].reduce((sum, score) => sum + score, 0);
+                    const points2 = matchData[participant2].reduce((sum, score) => sum + score, 0);
+
+                    const winner = points1 > points2 ? participant1 : participant2;
+                    return winner;
+                }
+                return null;
+            })
+        ).flat().filter(Boolean);
+
+        if (updatedBracket.length > 1) {
+            setBracket(createBracket(updatedBracket)); // Gera a próxima rodada
+        } else {
+            console.log("Vencedor final:", updatedBracket[0]);
+        }
     };
 
     const generateMatches = (group) => {
@@ -209,8 +217,7 @@ const GroupStage = ({ participants, groups, setGroups, recordGroupResults, match
                 </div>
             ))}
 
-            {generated && <button onClick={handleSubmitAllResults}>Submeter Todos os Resultados</button>}
-
+            {generated && <button onClick={handleSubmitGroupResults}>Submeter Todos os Resultados</button>}
             {groupWinners.length > 0 && (
                 <div>
                     <h3>Vencedores da Fase de Grupos</h3>
@@ -219,6 +226,9 @@ const GroupStage = ({ participants, groups, setGroups, recordGroupResults, match
                             <li key={index}>{winner}</li>
                         ))}
                     </ul>
+                    <button onClick={() => setBracket(createBracket(groupWinners))}>
+                        Gerar Chaveamento
+                    </button>
                 </div>
             )}
 
@@ -276,6 +286,7 @@ const GroupStage = ({ participants, groups, setGroups, recordGroupResults, match
                             </ul>
                         </div>
                     ))}
+                    <button onClick={handleSubmitBracketResults}>Submeter Resultados da Rodada</button>
                 </div>
             )}
         </div>
