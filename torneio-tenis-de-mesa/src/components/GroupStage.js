@@ -45,11 +45,8 @@ const GroupStage = ({ participants, groups, setGroups, recordGroupResults, match
                     const points2 = matchData[participant2].reduce((sum, score) => sum + score, 0);
     
                     // Armazena o total de pontos para cada participante no grupo
-                    if (!groupPoints[groupIndex][participant1]) groupPoints[groupIndex][participant1] = 0;
-                    if (!groupPoints[groupIndex][participant2]) groupPoints[groupIndex][participant2] = 0;
-    
-                    groupPoints[groupIndex][participant1] += points1;
-                    groupPoints[groupIndex][participant2] += points2;
+                    groupPoints[groupIndex][participant1] = (groupPoints[groupIndex][participant1] || 0) + points1;
+                    groupPoints[groupIndex][participant2] = (groupPoints[groupIndex][participant2] || 0) + points2;
     
                     // Adiciona o resultado da partida ao array allResults para registro detalhado
                     allResults.push({
@@ -64,25 +61,23 @@ const GroupStage = ({ participants, groups, setGroups, recordGroupResults, match
             });
         });
     
-        // Seleciona os vencedores finais com base nos pontos totais
+        // Lista de todos os vencedores de todos os grupos
         const winners = [];
+    
+        // Processa cada grupo para selecionar o vencedor
         Object.values(groupPoints).forEach((participants) => {
-            // Ordena os participantes do grupo pelo total de pontos (maior para menor)
+            // Ordena os participantes pelo total de pontos (maior para menor)
             const sortedParticipants = Object.entries(participants).sort((a, b) => b[1] - a[1]);
             
-            // Adiciona os primeiros colocados de cada grupo à lista de vencedores
-            winners.push(...sortedParticipants.map(p => p[0]));
+            // Seleciona o participante com maior pontuação
+            winners.push(sortedParticipants[0][0]); 
         });
     
-        // Limita o número de vencedores com base no total de participantes
-        const finalWinners = participants.length <= 31 ? winners.slice(0, 4) : winners.slice(0, 8);
-    
-        setGroupWinners(finalWinners); // Atualiza o estado com os vencedores
+        setGroupWinners(winners); // Atualiza o estado com os vencedores
         recordGroupResults(allResults); // Envia o resultado detalhado
         setError(null);
     };
-    
-    
+
     const handleSubmitBracketResults = () => {
         const updatedBracket = bracket.map((round, roundIndex) =>
             round.map((match, matchIndex) => {
@@ -126,13 +121,13 @@ const GroupStage = ({ participants, groups, setGroups, recordGroupResults, match
                 if (i + 1 < winners.length) {
                     currentRound.push([winners[i], winners[i + 1]]);
                 } else {
-                    // Em caso de número ímpar, o último vencedor avança automaticamente
+                    // Sem avanço automático, coloca o jogador sozinho para disputar normalmente
                     currentRound.push([winners[i], null]);
                 }
             }
             rounds.push(currentRound);
             winners = currentRound.map(match => {
-                // Simulação para determinar os vencedores das partidas, você deve adaptar isso
+                // Simulação para determinar os vencedores das partidas
                 const winner = simulateMatch(match[0], match[1]);
                 return winner;
             }).filter(winner => winner !== null); // Remover as entradas nulas
@@ -142,7 +137,7 @@ const GroupStage = ({ participants, groups, setGroups, recordGroupResults, match
 
     const simulateMatch = (participant1, participant2) => {
         if (participant2 === null) {
-            return participant1; // Avança automaticamente se não há oponente
+            return null; // Não há vencedor, o jogo precisa ser completado para determinar o vencedor
         }
         // Simulação simplificada, adapte conforme necessário
         return Math.random() > 0.5 ? participant1 : participant2;
@@ -244,53 +239,12 @@ const GroupStage = ({ participants, groups, setGroups, recordGroupResults, match
                             <h4>Rodada {roundIndex + 1}</h4>
                             <ul>
                                 {round.map((match, matchIndex) => (
-                                    <li key={matchIndex}>
-                                        {match[1] ? (
-                                            <div>
-                                                <p>{match[0]} vs {match[1]}</p>
-                                                {matchFormat === 'MD1' ? (
-                                                    <>
-                                                        <input
-                                                            type="number"
-                                                            placeholder={`Ponto de ${match[0]}`}
-                                                            min="0"
-                                                            onChange={(e) => handleScoreChange(`bracket-${roundIndex}-${matchIndex}`, match[0], 0, parseInt(e.target.value) || 0)}
-                                                        />
-                                                        <input
-                                                            type="number"
-                                                            placeholder={`Ponto de ${match[1]}`}
-                                                            min="0"
-                                                            onChange={(e) => handleScoreChange(`bracket-${roundIndex}-${matchIndex}`, match[1], 0, parseInt(e.target.value) || 0)}
-                                                        />
-                                                    </>
-                                                ) : (
-                                                    [0, 1, 2].map((scoreIndex) => (
-                                                        <div key={scoreIndex}>
-                                                            <input
-                                                                type="number"
-                                                                placeholder={`Ponto ${scoreIndex + 1} de ${match[0]}`}
-                                                                min="0"
-                                                                onChange={(e) => handleScoreChange(`bracket-${roundIndex}-${matchIndex}`, match[0], scoreIndex, parseInt(e.target.value) || 0)}
-                                                            />
-                                                            <input
-                                                                type="number"
-                                                                placeholder={`Ponto ${scoreIndex + 1} de ${match[1]}`}
-                                                                min="0"
-                                                                onChange={(e) => handleScoreChange(`bracket-${roundIndex}-${matchIndex}`, match[1], scoreIndex, parseInt(e.target.value) || 0)}
-                                                            />
-                                                        </div>
-                                                    ))
-                                                )}
-                                            </div>
-                                        ) : (
-                                            <p>{match[0]} avança automaticamente</p>
-                                        )}
-                                    </li>
+                                    <li key={matchIndex}>{match[0]} vs {match[1]}</li>
                                 ))}
                             </ul>
                         </div>
                     ))}
-                    <button onClick={handleSubmitBracketResults}>Submeter Resultados da Rodada</button>
+                    <button onClick={handleSubmitBracketResults}>Submeter Resultados do Chaveamento</button>
                 </div>
             )}
         </div>
