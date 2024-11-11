@@ -29,12 +29,12 @@ const GroupStage = ({ participants, groups, setGroups, recordGroupResults, match
 
     const handleSubmitGroupResults = () => {
         const allResults = [];
-        const winners = []; // Para armazenar vencedores de cada grupo
-
-        // Processa os resultados de cada grupo
+        const groupPoints = {}; // Para armazenar pontos por participante em cada grupo
+    
+        // Processa os resultados de cada grupo e calcula os pontos de cada participante
         groups.forEach((group, groupIndex) => {
-            const groupResults = {};
-
+            groupPoints[groupIndex] = {};
+    
             generateMatches(group).forEach((match, matchIndex) => {
                 const matchKey = `${groupIndex}-${matchIndex}`;
                 const matchData = scores[matchKey];
@@ -43,14 +43,14 @@ const GroupStage = ({ participants, groups, setGroups, recordGroupResults, match
                     const [participant1, participant2] = participants;
                     const points1 = matchData[participant1].reduce((sum, score) => sum + score, 0);
                     const points2 = matchData[participant2].reduce((sum, score) => sum + score, 0);
-
+    
                     // Armazena o total de pontos para cada participante no grupo
-                    if (!groupResults[participant1]) groupResults[participant1] = 0;
-                    if (!groupResults[participant2]) groupResults[participant2] = 0;
-
-                    groupResults[participant1] += points1;
-                    groupResults[participant2] += points2;
-
+                    if (!groupPoints[groupIndex][participant1]) groupPoints[groupIndex][participant1] = 0;
+                    if (!groupPoints[groupIndex][participant2]) groupPoints[groupIndex][participant2] = 0;
+    
+                    groupPoints[groupIndex][participant1] += points1;
+                    groupPoints[groupIndex][participant2] += points2;
+    
                     // Adiciona o resultado da partida ao array allResults para registro detalhado
                     allResults.push({
                         groupIndex,
@@ -62,23 +62,27 @@ const GroupStage = ({ participants, groups, setGroups, recordGroupResults, match
                     });
                 }
             });
-
-            // Determina o(s) vencedor(es) do grupo com base na lógica do tamanho do grupo
-            const sortedParticipants = Object.entries(groupResults).sort((a, b) => b[1] - a[1]);
-
-            // Adiciona 4 ou 8 vencedores com base no número de participantes
-            if (participants.length <= 31) {
-                winners.push(...sortedParticipants.slice(0, 4).map(p => p[0]));
-            } else {
-                winners.push(...sortedParticipants.slice(0, 8).map(p => p[0]));
-            }
         });
-
-        setGroupWinners(winners); // Atualiza o estado com os vencedores
+    
+        // Seleciona os vencedores finais com base nos pontos totais
+        const winners = [];
+        Object.values(groupPoints).forEach((participants) => {
+            // Ordena os participantes do grupo pelo total de pontos (maior para menor)
+            const sortedParticipants = Object.entries(participants).sort((a, b) => b[1] - a[1]);
+            
+            // Adiciona os primeiros colocados de cada grupo à lista de vencedores
+            winners.push(...sortedParticipants.map(p => p[0]));
+        });
+    
+        // Limita o número de vencedores com base no total de participantes
+        const finalWinners = participants.length <= 31 ? winners.slice(0, 4) : winners.slice(0, 8);
+    
+        setGroupWinners(finalWinners); // Atualiza o estado com os vencedores
         recordGroupResults(allResults); // Envia o resultado detalhado
         setError(null);
     };
-
+    
+    
     const handleSubmitBracketResults = () => {
         const updatedBracket = bracket.map((round, roundIndex) =>
             round.map((match, matchIndex) => {
