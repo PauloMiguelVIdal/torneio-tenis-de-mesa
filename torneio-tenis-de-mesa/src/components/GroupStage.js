@@ -144,20 +144,27 @@ const handleSubmitGroupResults = () => {
             setError('Nenhum participante para gerar grupos.');
             return;
         }
-
+    
         const shuffledParticipants = [...participants].sort(() => Math.random() - 0.5);
-        const groupSize = Math.ceil(shuffledParticipants.length / 4);
+        const numGroups = 4; // Número de grupos desejado
+        const baseGroupSize = Math.floor(shuffledParticipants.length / numGroups); // Tamanho base do grupo
+        const remainder = shuffledParticipants.length % numGroups; // Participantes "extras"
+    
         const newGroups = [];
-
-        for (let i = 0; i < shuffledParticipants.length; i += groupSize) {
-            newGroups.push(shuffledParticipants.slice(i, i + groupSize));
+        let startIndex = 0;
+    
+        for (let i = 0; i < numGroups; i++) {
+            // Adiciona um participante extra nos primeiros grupos, se houver "remainder"
+            const currentGroupSize = baseGroupSize + (i < remainder ? 1 : 0);
+            newGroups.push(shuffledParticipants.slice(startIndex, startIndex + currentGroupSize));
+            startIndex += currentGroupSize;
         }
-
+    
         setScores({});
         setGenerated(true);
         setGroups(newGroups);
     };
-
+    
     return (
         <div>
             <h2>Fase de Grupos</h2>
