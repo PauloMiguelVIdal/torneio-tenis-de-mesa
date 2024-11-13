@@ -7,6 +7,7 @@ const GroupStage = ({ participants, groups, setGroups, recordGroupResults, match
     const [groupWinners, setGroupWinners] = useState([]); 
     const [bracket, setBracket] = useState([]); 
     const [currentRound, setCurrentRound] = useState(0); // Controla a rodada atual do chaveamento
+    const [finalWinner, setFinalWinner] = useState(null); // Novo estado para o vencedor final
 
     // Função para lidar com a alteração do score
     const handleScoreChange = (matchKey, participant, scoreIndex, score) => {
@@ -30,51 +31,55 @@ const GroupStage = ({ participants, groups, setGroups, recordGroupResults, match
     };
 
     // Função para registrar os resultados da fase de grupos
-    const handleSubmitGroupResults = () => {
-        const allResults = [];
-        const groupPoints = {}; 
-    
-        groups.forEach((group, groupIndex) => {
-            groupPoints[groupIndex] = {};
-    
-            generateMatches(group).forEach((match, matchIndex) => {
-                const matchKey = `${groupIndex}-${matchIndex}`;
-                const matchData = scores[matchKey];
-                if (matchData) {
-                    const participants = Object.keys(matchData);
-                    const [participant1, participant2] = participants;
-                    const points1 = matchData[participant1].reduce((sum, score) => sum + score, 0);
-                    const points2 = matchData[participant2].reduce((sum, score) => sum + score, 0);
-    
-                    groupPoints[groupIndex][participant1] = (groupPoints[groupIndex][participant1] || 0) + points1;
-                    groupPoints[groupIndex][participant2] = (groupPoints[groupIndex][participant2] || 0) + points2;
-    
-                    allResults.push({
-                        groupIndex,
-                        matchIndex,
-                        participant1,
-                        participant2,
-                        points1,
-                        points2,
-                    });
-                }
-            });
+// Ajuste na função handleSubmitGroupResults para definir o vencedor da fase de grupos
+const handleSubmitGroupResults = () => {
+    const allResults = [];
+    const groupPoints = {}; 
+
+    groups.forEach((group, groupIndex) => {
+        groupPoints[groupIndex] = {};
+
+        generateMatches(group).forEach((match, matchIndex) => {
+            const matchKey = `${groupIndex}-${matchIndex}`;
+            const matchData = scores[matchKey];
+            if (matchData) {
+                const participants = Object.keys(matchData);
+                const [participant1, participant2] = participants;
+                const points1 = matchData[participant1].reduce((sum, score) => sum + score, 0);
+                const points2 = matchData[participant2].reduce((sum, score) => sum + score, 0);
+
+                groupPoints[groupIndex][participant1] = (groupPoints[groupIndex][participant1] || 0) + points1;
+                groupPoints[groupIndex][participant2] = (groupPoints[groupIndex][participant2] || 0) + points2;
+
+                allResults.push({
+                    groupIndex,
+                    matchIndex,
+                    participant1,
+                    participant2,
+                    points1,
+                    points2,
+                });
+            }
         });
-    
-        const winners = [];
-    
-        Object.values(groupPoints).forEach((participants) => {
-            const sortedParticipants = Object.entries(participants).sort((a, b) => b[1] - a[1]);
-            winners.push(sortedParticipants[0][0]); 
-        });
-    
-        setGroupWinners(winners); 
-        recordGroupResults(allResults); 
-        setError(null);
-    };
+    });
+
+    const winners = [];
+
+    Object.values(groupPoints).forEach((participants) => {
+        const sortedParticipants = Object.entries(participants).sort((a, b) => b[1] - a[1]);
+        winners.push(sortedParticipants[0][0]); 
+    });
+
+    setGroupWinners(winners); 
+    recordGroupResults(allResults); 
+    setError(null);
+    setScores({}); // Limpa os scores para começar o chaveamento sem valores antigos
+};
 
     // Função para registrar os resultados do chaveamento
-    const handleSubmitBracketResults = () => {
+   // Ajuste na função handleSubmitBracketResults
+       // Função para registrar os resultados do chaveamento
+       const handleSubmitBracketResults = () => {
         const updatedBracket = bracket[currentRound].map((match, matchIndex) => {
             const matchKey = `bracket-${currentRound}-${matchIndex}`;
             const matchData = scores[matchKey];
@@ -89,14 +94,15 @@ const GroupStage = ({ participants, groups, setGroups, recordGroupResults, match
             return null;
         }).filter(Boolean); // Filtra os matches válidos
 
-        // Verifica se há uma nova rodada
         if (updatedBracket.length > 1) {
             setBracket(prevBracket => {
                 const nextRound = createNextRound(updatedBracket);
                 return [...prevBracket, nextRound];
             });
             setCurrentRound(currentRound + 1);
+            setScores({}); // Limpa os scores ao iniciar a nova rodada
         } else {
+            setFinalWinner(updatedBracket[0]); // Define o vencedor final
             console.log("Vencedor final:", updatedBracket[0]);
         }
     };
@@ -109,7 +115,6 @@ const GroupStage = ({ participants, groups, setGroups, recordGroupResults, match
         }
         return nextRound;
     };
-
     // Função para gerar os matches de um grupo
     const generateMatches = (group) => {
         const matches = [];
@@ -188,49 +193,57 @@ const GroupStage = ({ participants, groups, setGroups, recordGroupResults, match
                 </div>
             ))}
 
-            {generated && <button onClick={handleSubmitGroupResults}>Submeter Todos os Resultados</button>}
-            {groupWinners.length > 0 && (
+            {finalWinner ? (
                 <div>
-                    <h3>Vencedores da Fase de Grupos</h3>
-                    <ul>
-                        {groupWinners.map((winner, index) => (
-                            <li key={index}>{winner}</li>
-                        ))}
-                    </ul>
-                    <button onClick={() => setBracket(createBracket(groupWinners))}>
-                        Gerar Chaveamento
-                    </button>
+                    <h3>Vencedor Final</h3>
+                    <p>{finalWinner}</p>
                 </div>
-            )}
-
-            {bracket.length > 0 && (
-                <div>
-                    <h3>Chaveamento</h3>
-                    {bracket[currentRound] && bracket[currentRound].map((match, matchIndex) => (
-                        <div key={matchIndex}>
-                            <p>{match[0]} vs {match[1]}</p>
-                            {[0, 1, 2].map((scoreIndex) => (
-                                <div key={scoreIndex}>
-                                    <input
-                                        type="number"
-                                        placeholder={`Ponto ${scoreIndex + 1} de ${match[0]}`}
-                                        min="0"
-                                        onChange={(e) => handleScoreChange(`bracket-${currentRound}-${matchIndex}`, match[0], scoreIndex, parseInt(e.target.value) || 0)}
-                                    />
-                                    <input
-                                        type="number"
-                                        placeholder={`Ponto ${scoreIndex + 1} de ${match[1]}`}
-                                        min="0"
-                                        onChange={(e) => handleScoreChange(`bracket-${currentRound}-${matchIndex}`, match[1], scoreIndex, parseInt(e.target.value) || 0)}
-                                    />
+            ) : (
+                <>
+                    {generated && <button onClick={handleSubmitGroupResults}>Submeter Todos os Resultados</button>}
+                    {groupWinners.length > 0 && (
+                        <div>
+                            <h3>Vencedores da Fase de Grupos</h3>
+                            <ul>
+                                {groupWinners.map((winner, index) => (
+                                    <li key={index}>{winner}</li>
+                                ))}
+                            </ul>
+                            <button onClick={() => setBracket(createBracket(groupWinners))}>
+                                Gerar Chaveamento
+                            </button>
+                        </div>
+                    )}
+                    {bracket.length > 0 && (
+                        <div>
+                            <h3>Chaveamento</h3>
+                            {bracket[currentRound] && bracket[currentRound].map((match, matchIndex) => (
+                                <div key={matchIndex}>
+                                    <p>{match[0]} vs {match[1]}</p>
+                                    {[0, 1, 2].map((scoreIndex) => (
+                                        <div key={scoreIndex}>
+                                            <input
+                                                type="number"
+                                                placeholder={`Ponto ${scoreIndex + 1} de ${match[0]}`}
+                                                min="0"
+                                                onChange={(e) => handleScoreChange(`bracket-${currentRound}-${matchIndex}`, match[0], scoreIndex, parseInt(e.target.value) || 0)}
+                                            />
+                                            <input
+                                                type="number"
+                                                placeholder={`Ponto ${scoreIndex + 1} de ${match[1]}`}
+                                                min="0"
+                                                onChange={(e) => handleScoreChange(`bracket-${currentRound}-${matchIndex}`, match[1], scoreIndex, parseInt(e.target.value) || 0)}
+                                            />
+                                        </div>
+                                    ))}
                                 </div>
                             ))}
+                            {bracket[currentRound].length > 0 && (
+                                <button onClick={handleSubmitBracketResults}>Submeter Resultados do Chaveamento</button>
+                            )}
                         </div>
-                    ))}
-                    {bracket[currentRound].length > 0 && (
-                        <button onClick={handleSubmitBracketResults}>Submeter Resultados do Chaveamento</button>
                     )}
-                </div>
+                </>
             )}
         </div>
     );
