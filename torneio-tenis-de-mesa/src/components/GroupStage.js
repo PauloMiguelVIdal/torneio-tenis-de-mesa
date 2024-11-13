@@ -88,24 +88,25 @@ const handleSubmitGroupResults = () => {
                 const [participant1, participant2] = participants;
                 const points1 = matchData[participant1].reduce((sum, score) => sum + score, 0);
                 const points2 = matchData[participant2].reduce((sum, score) => sum + score, 0);
-
+    
                 return points1 > points2 ? participant1 : participant2;
             }
             return null;
-        }).filter(Boolean); // Filtra os matches válidos
+        }).filter(Boolean) // Filtra os matches válidos
 
-        if (updatedBracket.length > 1) {
-            setBracket(prevBracket => {
-                const nextRound = createNextRound(updatedBracket);
-                return [...prevBracket, nextRound];
-            });
-            setCurrentRound(currentRound + 1);
-            setScores({}); // Limpa os scores ao iniciar a nova rodada
-        } else {
-            setFinalWinner(updatedBracket[0]); // Define o vencedor final
-            console.log("Vencedor final:", updatedBracket[0]);
-        }
-    };
+    // Verifica se há uma nova rodada
+    if (updatedBracket.length > 1) {
+        setBracket(prevBracket => {
+            const nextRound = createNextRound(updatedBracket);
+            return [...prevBracket, nextRound];
+        });
+        setCurrentRound(currentRound + 1);
+        setScores({}); // Zera os scores para limpar os inputs
+    } else {
+        console.log("Vencedor final:", updatedBracket[0]);
+        setFinalWinner(updatedBracket[0]); // Define o vencedor final
+    }
+};
 
     // Função para criar a próxima rodada do chaveamento
     const createNextRound = (winners) => {
