@@ -20,7 +20,7 @@ const Tournament = () => {
 
   return (
     <div>
-      <h1>Torneio Tênis de Mesa</h1>
+      <h1 >Torneio Tênis de Mesa</h1>
 
       <ParticipantForm 
         addParticipant={addParticipant} 

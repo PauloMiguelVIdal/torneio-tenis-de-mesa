@@ -102,17 +102,17 @@ const Tournament = () => {
     };
 
     return (
-        <div>
-            <h1>Torneio</h1>
-            <label>
+        <div >
+            <h1  className="text-3xl font-bold underline">Torneio Tênis de Mesa</h1>
+            {/* <label>
                 Formato da Partida:
                 <select value={matchFormat} onChange={(e) => changeMatchFormat(e.target.value)}>
                     <option value="MD1">MD1</option>
                     <option value="MD3">MD3</option>
                 </select>
-            </label>
+            </label> */}
 
-            <ParticipantForm
+            <ParticipantForm 
                 addParticipant={addParticipant}
                 participants={participants}
                 updateParticipant={updateParticipant}

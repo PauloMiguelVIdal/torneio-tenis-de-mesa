@@ -12,7 +12,7 @@ const ParticipantForm = ({ addParticipant, participants, updateParticipant, remo
 
     return (
         <div>
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} >
                 <input 
                     type="text" 
                     placeholder="Nome do participante" 
@@ -30,10 +30,10 @@ const ParticipantForm = ({ addParticipant, participants, updateParticipant, remo
                             const newName = prompt("Digite o novo nome do participante:", participant);
                             if (newName) updateParticipant(participant, newName);
                         }}>
-                            Alterar
+                            <img src='../icon/editar.png' className="w-[20px] h-[20px]"/>
                         </button>
                         <button onClick={() => removeParticipant(participant)}>
-                            Excluir
+                            <img src='../icon/excluir.png' className="w-[20px] h-[20px]"/>
                         </button>
                     </li>
                 ))}

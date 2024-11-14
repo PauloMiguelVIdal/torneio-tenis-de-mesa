@@ -9,6 +9,7 @@ const GroupStage = ({ participants, groups, setGroups, recordGroupResults, match
     const [currentRound, setCurrentRound] = useState(0); // Controla a rodada atual do chaveamento
     const [finalWinner, setFinalWinner] = useState(null); // Novo estado para o vencedor final
 
+    
     // Função para lidar com a alteração do score
     const handleScoreChange = (matchKey, participant, scoreIndex, score) => {
         if (score < 0) {
