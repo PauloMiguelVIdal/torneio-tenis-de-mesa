@@ -168,27 +168,27 @@ const handleSubmitGroupResults = () => {
     
     return (
         <div>
-            <h2>Fase de Grupos</h2>
+            <h2 className='text-[30px] text-[#350973] font-bold text-center '>Fase de Grupos</h2>
             {error && <p style={{ color: 'red' }}>{error}</p>}
 
-            <button onClick={handleGenerateGroups}>Gerar Fase de Grupos</button>
+            <button  className='border-[#6411D9] border-2  rounded-[20px] mb-[10px] pl-[10px] pr-[10px] pb-[2px] text-center bg-[#350973] text-white text-[20px]' onClick={handleGenerateGroups}>Gerar Fase de Grupos</button>
 
             {generated && groups.map((group, groupIndex) => (
-                <div key={groupIndex} className="group-container">
-                    <h3>Grupo {groupIndex + 1}</h3>
+                <div key={groupIndex} className="group-container text-center">
+                    <h3 className='font-bold mt-[30px] mb-[30px]' >Grupo {groupIndex + 1}</h3>
                     <ul>
                         {generateMatches(group).map((match, matchIndex) => (
                             <li key={matchIndex}>
-                                <p>{match[0]} vs {match[1]}</p>
+                                <p className='text-[#350973] mt-[10px] mb-[10px]'>{match[0]} vs {match[1]}</p>
                                 {[0, 1, 2].map((scoreIndex) => (
                                     <div key={scoreIndex}>
-                                        <input
+                                        <input className='border-[#6411D9] border-2  rounded-l-lg mt-[4px] p-[3px]  text-center focus:outline-none ' 
                                             type="number"
                                             placeholder={`Ponto ${scoreIndex + 1} de ${match[0]}`}
                                             min="0"
                                             onChange={(e) => handleScoreChange(`${groupIndex}-${matchIndex}`, match[0], scoreIndex, parseInt(e.target.value) || 0)}
                                         />
-                                        <input
+                                        <input className='border-[#6411D9] border-2  rounded-r-lg mt-[4px] p-[3px]  text-center focus:outline-none ' 
                                             type="number"
                                             placeholder={`Ponto ${scoreIndex + 1} de ${match[1]}`}
                                             min="0"
@@ -203,41 +203,43 @@ const handleSubmitGroupResults = () => {
             ))}
 
             {finalWinner ? (
-                <div>
-                    <h3>Vencedor Final</h3>
-                    <p>{finalWinner}</p>
+                <div className='text-center'>
+                    <h3 className='font-bold pt-[20px] pb-[20px] text-[40px]'>Vencedor Final</h3>
+                    <p className='font-bold pt-[20px] pb-[60px] text-[80px] text-[#ffd700]'>{finalWinner}</p>
                 </div>
             ) : (
                 <>
-                    {generated && <button onClick={handleSubmitGroupResults}>Submeter Todos os Resultados</button>}
+                    {generated && <button onClick={handleSubmitGroupResults} className='mt-[30px] border-[#6411D9] border-2  rounded-[20px] mb-[10px] pl-[10px] pr-[10px] pb-[2px] text-center bg-[#350973] text-white text-[20px] '>Submeter Todos os Resultados</button>}
                     {groupWinners.length > 0 && (
                         <div>
-                            <h3>Vencedores da Fase de Grupos</h3>
-                            <ul>
+                            <h3 className='font-bold text-[40px]'>Vencedores da Fase de Grupos</h3>
+                            <ul className='text-[#6411D9] text-[30px]'>
                                 {groupWinners.map((winner, index) => (
                                     <li key={index}>{winner}</li>
                                 ))}
                             </ul>
-                            <button onClick={() => setBracket(createBracket(groupWinners))}>
+                            <button className='mt-[30px] border-[#6411D9]  border-2  rounded-[20px] mb-[10px] pl-[10px] pr-[10px] pb-[2px] text-center bg-[#350973] text-[#daa520]  text-[20px] ' onClick={() => setBracket(createBracket(groupWinners))}>
                                 Gerar Chaveamento
                             </button>
                         </div>
                     )}
                     {bracket.length > 0 && (
                         <div>
-                            <h3>Chaveamento</h3>
+                            <h3 className='font-bold text-[40px] text-center'>Chaveamento</h3>
                             {bracket[currentRound] && bracket[currentRound].map((match, matchIndex) => (
-                                <div key={matchIndex}>
-                                    <p>{match[0]} vs {match[1]}</p>
+                                <div className='text-center' key={matchIndex}>
+                                    <p className='text-[#6411D9]'>{match[0]} vs {match[1]}</p>
                                     {[0, 1, 2].map((scoreIndex) => (
                                         <div key={scoreIndex}>
                                             <input
+                                             className='border-[#6411D9] border-2  rounded-l-lg mt-[4px] p-[3px]  text-center focus:outline-none '
                                                 type="number"
                                                 placeholder={`Ponto ${scoreIndex + 1} de ${match[0]}`}
                                                 min="0"
                                                 onChange={(e) => handleScoreChange(`bracket-${currentRound}-${matchIndex}`, match[0], scoreIndex, parseInt(e.target.value) || 0)}
                                             />
                                             <input
+                                            className='border-[#6411D9] border-2  rounded-r-lg mt-[4px] p-[3px]  text-center focus:outline-none '
                                                 type="number"
                                                 placeholder={`Ponto ${scoreIndex + 1} de ${match[1]}`}
                                                 min="0"
@@ -248,7 +250,7 @@ const handleSubmitGroupResults = () => {
                                 </div>
                             ))}
                             {bracket[currentRound].length > 0 && (
-                                <button onClick={handleSubmitBracketResults}>Submeter Resultados do Chaveamento</button>
+                                <button onClick={handleSubmitBracketResults} className='mt-[30px] border-[#6411D9] border-2  rounded-[20px] mb-[10px] pl-[10px] pr-[10px] pb-[2px] text-center bg-[#350973] text-white text-[20px] '>Submeter Resultados do Chaveamento</button>
                             )}
                         </div>
                     )}
